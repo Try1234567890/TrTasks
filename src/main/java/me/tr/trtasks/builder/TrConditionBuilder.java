@@ -84,7 +84,7 @@ public class TrConditionBuilder {
             }
 
             @Override
-            protected boolean canRun() {
+            public boolean canRun() {
                 return canRun.get();
             }
         };
@@ -99,7 +99,7 @@ public class TrConditionBuilder {
             }
 
             @Override
-            protected boolean canRun() {
+            public boolean canRun() {
                 return canRun.get();
             }
         };
