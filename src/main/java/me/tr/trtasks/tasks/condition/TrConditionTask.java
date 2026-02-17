@@ -71,7 +71,7 @@ public abstract class TrConditionTask extends TrTask {
 
     protected abstract void execute();
 
-    protected abstract boolean canRun();
+    public abstract boolean canRun();
 
     @Override
     protected void task() {
