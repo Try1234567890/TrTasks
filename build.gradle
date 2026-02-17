@@ -1,0 +1,17 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+
+publishing {
+    publications {
+        publishToMaven(MavenPublication) {
+            from components.java
+
+            groupId = 'me.tr.trtasks'
+            artifactId = 'tasks'
+            version = '2.0.0'
+        }
+    }
+}
