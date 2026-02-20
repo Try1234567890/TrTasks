@@ -3,13 +3,21 @@ package me.tr.trtasks.time;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public record TrTime(long amount, TrTimeUnit unit) {
+public class TrTime {
     public static final TrTime EMPTY = new TrTime(0);
     public static final TrTime NULL = new TrTime(-1);
     private static final Pattern TIME_PATTERN = Pattern.compile("(\\d+)\\s*([a-zA-Z]{1,12})");
 
+    private long amount;
+    private final TrTimeUnit unit;
+
+    public TrTime(long amount, TrTimeUnit unit) {
+        this.amount = amount;
+        this.unit = unit;
+    }
+
     public TrTime(long amount) {
-        this(amount, TrTimeUnit.SECONDS);
+        this(amount, TrTimeUnit.MILLISECONDS);
     }
 
     public long to(TrTimeUnit to) {
@@ -86,6 +94,26 @@ public record TrTime(long amount, TrTimeUnit unit) {
 
     public boolean isMinorOrEquals(TrTime time) {
         return toNano() <= time.toNano();
+    }
+
+    public synchronized TrTime add(TrTime time) {
+        this.amount += time.to(unit);
+        return this;
+    }
+
+    public synchronized TrTime remove(TrTime time) {
+        this.amount -= time.to(unit);
+        return this;
+    }
+
+    public synchronized TrTime add(long time) {
+        this.amount += time;
+        return this;
+    }
+
+    public synchronized TrTime remove(long time) {
+        this.amount -= time;
+        return this;
     }
 
     public boolean isNull() {
