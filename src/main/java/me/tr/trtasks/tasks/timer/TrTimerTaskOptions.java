@@ -3,21 +3,23 @@ package me.tr.trtasks.tasks.timer;
 import me.tr.trtasks.tasks.TrTaskOptions;
 import me.tr.trtasks.time.TrTimeUnit;
 
+import java.util.function.Supplier;
+
 public class TrTimerTaskOptions extends TrTaskOptions {
-    private String message;
+    private Supplier<String> message;
     private TrTimeUnit unit;
 
     public TrTimerTaskOptions(TrTimerTask task) {
         super(task);
-        this.message = "Task " + task.id() + " completed in [Elapsed] [ElapsedUnit]";
+        this.message = () -> "Task " + task.id() + " completed in [Elapsed] [ElapsedUnit]";
         this.unit = TrTimeUnit.MILLISECONDS;
     }
 
-    public String getMessage() {
+    public Supplier<String> getMessage() {
         return message;
     }
 
-    public TrTimerTaskOptions setMessage(String message) {
+    public TrTimerTaskOptions setMessage(Supplier<String> message) {
         this.message = message;
         return this;
     }

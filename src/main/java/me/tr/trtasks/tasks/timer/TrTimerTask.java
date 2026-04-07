@@ -27,7 +27,7 @@ public class TrTimerTask extends TrTask {
         TrTimeUnit unit = getOptions().getUnit();
         long elapsed = new TrTime(end - start, TrTimeUnit.NANOSECONDS).to(unit);
 
-        sendMessage(getOptions().getMessage()
+        sendMessage(getOptions().getMessage().get()
                 .replace("[Elapsed]", String.valueOf(elapsed))
                 .replace("[ElapsedUnit]", unit.getSymbols()[0])
                 .replace("[ElapsedUnit0]", unit.getSymbols()[0])
