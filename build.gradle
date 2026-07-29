@@ -1,17 +1,76 @@
 plugins {
-    id 'java-library'
-    id 'maven-publish'
+    id("java-library")
+    id("maven-publish")
+    id("com.gradleup.shadow") version "9.5.1"
 }
 
+version = '3.0.0'
 
-publishing {
-    publications {
-        publishToMaven(MavenPublication) {
-            from components.java
+var github_name = System.getenv('GITHUB_USERNAME')
+var github_token = System.getenv('GITHUB_TOKEN')
 
-            groupId = 'me.tr.trtasks'
-            artifactId = 'tasks'
-            version = '2.0.2'
+repositories {
+    mavenCentral()
+    maven {
+        name = 'Java-Libraries'
+        url = uri('https://maven.pkg.github.com/' + github_name + '/Java-Libraries')
+        credentials {
+            username = github_name
+            password = github_token
         }
     }
+}
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+test {
+    useJUnitPlatform()
+    failOnNoDiscoveredTests = false
+}
+
+shadowJar {
+    archiveBaseName = this.name
+    archiveClassifier = ''
+}
+
+jar {
+    enabled = false
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from(components["shadow"])
+
+                groupId = 'com.github.try'
+                artifactId = 'jts'
+                version = this.version
+            }
+        }
+
+        repositories {
+            maven {
+                name = 'Java-Libraries'
+                url = uri('https://maven.pkg.github.com/' + github_name + '/Java-Libraries')
+                credentials {
+                    username = github_name
+                    password = github_token
+                }
+            }
+        }
+    }
+}
+
+dependencies {
+    compileOnly('com.github.try:utilities:1.0.6')
+    compileOnly('org.jetbrains:annotations:24.0.0')
+
+    testImplementation('com.github.try:utilities:1.0.6')
+    testImplementation(platform('org.junit:junit-bom:5.11.0'))
+    testImplementation('org.junit.jupiter:junit-jupiter')
+    testRuntimeOnly('org.junit.platform:junit-platform-launcher')
 }
