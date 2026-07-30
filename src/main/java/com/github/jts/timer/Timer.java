@@ -22,11 +22,10 @@ public sealed class Timer permits StaticTimer {
     private final List<TimerTask> tasks = new CopyOnWriteArrayList<>();
 
     private final ScheduledExecutorService executor =
-            Executors.newSingleThreadScheduledExecutor(r -> {
-                Thread t = new Thread(r, "timer-execution-thread");
-                t.setDaemon(true);
-                return t;
-            });
+            Executors.newSingleThreadScheduledExecutor(r ->
+                    Thread.ofPlatform().name("timer-execution-thread")
+                            .uncaughtExceptionHandler((thread, exception) -> LOGGER.log(Level.SEVERE, "Uncaught exception in timer execution thread", exception))
+                            .unstarted(r));
 
     private final AtomicBoolean started = new AtomicBoolean(false);
     private final AtomicBoolean stopped = new AtomicBoolean(false);
