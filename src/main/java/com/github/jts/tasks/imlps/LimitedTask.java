@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * This task is a wrapper of any {@link AbstractTask} to limit
- * how many times it executes.<p>
+ * how many times it executes.
  * <p>
  * This task will execute the original task until the repeat limit is reached.
  * The limit is decremented each time the task effectively executes, if the task

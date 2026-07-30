@@ -9,8 +9,15 @@ import java.util.function.Predicate;
  * The timer is the process that runs it its own thread and cycle through all registered
  * tasks checking if they can run and executing them if they can.
  *
- * <h2>Timer Error Handling</h2>
- * TODO
+ * <h2><b>Timer Error Handling</b></h2>
+ * The error handling of a Timer is different between errors.
+ * We need to differentiate two type of errors:
+ * Errors that happens inside the Timer logic and errors happen inside any task
+ * while running it.
+ * In the first case, when an error occurs while executing the timer logic, the timer will be stopped and the Exception is thrown.
+ * In the second case, when an error occurs inside a task, only the {@link Exception} are caught and safely logged to the console,
+ * without blocking/stopping the timer, for the {@link Throwable} that aren't exceptions (like {@link Error}s) the timer will be stopped
+ * and the {@code Throwable} is <b>not</b> caugth and neutralized.
  */
 public interface Timer {
 

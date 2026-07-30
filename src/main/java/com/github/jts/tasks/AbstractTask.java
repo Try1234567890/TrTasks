@@ -34,6 +34,7 @@ public abstract class AbstractTask implements Task {
         this.listeners = Preconditions.simpleNotNull(listeners, new CopyOnWriteArrayList<>());
         this.action = Preconditions.simpleParameterNotNull(action, "action");
     }
+
     public AbstractTask(String id, Executor executor, Timer timer,
                         Time initialDelay, TaskConfig config, TaskAction action) {
         this.id = Preconditions.parameterNotNull(id, "id");
@@ -132,16 +133,6 @@ public abstract class AbstractTask implements Task {
     }
 
     /**
-     * Remove a listener to this task.
-     *
-     * @param listener the listener to add
-     */
-    @Override
-    public void remListener(TaskListener listener) {
-        listeners.remove(Preconditions.parameterNotNull(listener, "listener"));
-    }
-
-    /**
      * Create a new {@link LimitedTask} of this task with the given {@code amount} of repetitions.
      *
      * @param amount The amount of repetitions.
@@ -160,7 +151,11 @@ public abstract class AbstractTask implements Task {
      */
     @Override
     public final void run() {
-        if (!canRun()) return;
+        if (isUnscheduled()) {
+            LOGGER.warning("Cannot run task " + this + " because it is not scheduled yet.");
+            return;
+        }
+
         state = TaskState.RUNNING;
         listeners.forEach(l -> safeNotify(() -> l.onStart(this), "An error occurs while running onStart on " + l.getClass().getName()));
         try {
@@ -168,7 +163,7 @@ public abstract class AbstractTask implements Task {
             state = TaskState.COMPLETED;
             listeners.forEach(l -> safeNotify(() -> l.onSuccess(this), "An error occurs while running onSuccess on " + l.getClass().getName()));
         } catch (Exception e) {
-            unscheduled(TaskState.FAILED);
+            unschedule(TaskState.FAILED);
             listeners.forEach(l -> safeNotify(() -> l.onFailure(this, e), "An error occurs while running onFailure on " + l.getClass().getName()));
 
             if (config.RESCHEDULE_ON_FAIL.get()) schedule();
@@ -183,8 +178,8 @@ public abstract class AbstractTask implements Task {
      */
     @Override
     public final void cancel() {
+        unschedule(TaskState.CANCELLED);
         getExecutor().shutdown();
-        unscheduled(TaskState.CANCELLED);
         listeners.forEach(l -> safeNotify(() -> l.onCancel(this), "An error occurs while running onCancel on " + l.getClass().getName()));
     }
 
@@ -198,7 +193,7 @@ public abstract class AbstractTask implements Task {
      */
     @Override
     public final void pause() {
-        unscheduled(TaskState.PAUSED);
+        unschedule(TaskState.PAUSED);
         listeners.forEach(l -> safeNotify(() -> l.onPause(this), "An error occurs while running onPause on " + l.getClass().getName()));
     }
 
@@ -213,26 +208,46 @@ public abstract class AbstractTask implements Task {
         listeners.forEach(l -> safeNotify(() -> l.onResume(this), "An error occurs while running onResume on " + l.getClass().getName()));
     }
 
+    /**
+     * Schedule this task to its timer.
+     *
+     * @return {@code true} if, and only if, the task was scheduled, {@code false} otherwise
+     */
     @Override
     public boolean schedule() {
-        if (state.isScheduled) return false;
-
         state = TaskState.SCHEDULED;
         return getScheduler().schedule(getTimer());
     }
 
+    /**
+     * Unschedule this task from its timer.
+     *
+     * @return {@code true} if, and only if, the task was unscheduled, {@code false} otherwise
+     */
     @Override
-    public void unschedule() {
-        unscheduled(TaskState.PENDING);
-        getScheduler().unschedule(getTimer());
+    public boolean unschedule() {
+        return unschedule(TaskState.PENDING);
     }
 
-    private void unscheduled(TaskState newState) {
-        if (state.isScheduled)
-            state = newState;
-        unschedule();
+    /**
+     * Unschedule this task from its timer.
+     *
+     * @return {@code true} if, and only if, the task was unscheduled, {@code false} otherwise
+     */
+    public boolean unschedule(TaskState newState) {
+        if (isUnscheduled()) return false;
+
+        state = newState;
+        return getScheduler().unschedule(getTimer()).isPresent();
     }
 
+    /**
+     * Safe notify to the listener a change of this task.
+     * This method is used to avoid the task execution fails caused by a malformed listener.
+     *
+     * @param notification the notification to propagate.
+     * @param msgError     the error message to log if the notification fails.
+     */
     private void safeNotify(Runnable notification, String msgError) {
         try {
             notification.run();
@@ -241,10 +256,26 @@ public abstract class AbstractTask implements Task {
         }
     }
 
-    private boolean canRun() {
-        return state != TaskState.CANCELLED
-                && state != TaskState.PAUSED
-                && state != TaskState.FAILED;
+    /**
+     * Checks if this task is scheduled.
+     *
+     * @return {@code true} if this task is scheduled, {@code false} otherwise
+     */
+    private boolean isScheduled() {
+        return state == TaskState.SCHEDULED
+                || state == TaskState.RUNNING
+                || state == TaskState.COMPLETED;
+    }
+
+    /**
+     * Checks if this task is unscheduled.
+     *
+     * @return {@code true} if this task is unscheduled, {@code false} otherwise
+     */
+    private boolean isUnscheduled() {
+        return state == TaskState.PENDING
+                || state == TaskState.CANCELLED
+                || state == TaskState.PAUSED;
     }
 
     @Override

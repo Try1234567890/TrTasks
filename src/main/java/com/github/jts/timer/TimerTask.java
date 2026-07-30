@@ -107,8 +107,8 @@ public record TimerTask(Predicate<? extends Task> predicate, Task task) implemen
     }
 
     @Override
-    public void unschedule() {
-        task.unschedule();
+    public boolean unschedule() {
+        return task.unschedule();
     }
 
     /**
@@ -129,16 +129,6 @@ public record TimerTask(Predicate<? extends Task> predicate, Task task) implemen
     @Override
     public void newListener(TaskListener listener) {
         task.newListener(listener);
-    }
-
-    /**
-     * Remove a listener to this task.
-     *
-     * @param listener the listener to add
-     */
-    @Override
-    public void remListener(TaskListener listener) {
-        task.remListener(listener);
     }
 
     /**

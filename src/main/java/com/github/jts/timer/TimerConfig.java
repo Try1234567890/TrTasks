@@ -15,11 +15,11 @@ import java.util.function.Predicate;
  * It contains some options that can be configured to manipulate the timer
  * behavior.
  *
- * @see TimerImpl
+ * @see Timer
  */
 public class TimerConfig {
     /**
-     * This option define how much time should pass between each timer iteration?
+     * This option define how much time should pass between each timer iteration.
      * Consequentially, the value of this option implicit define the minimum interval
      * of the registered task too.
      * <p>

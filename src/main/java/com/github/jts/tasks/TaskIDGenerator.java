@@ -2,6 +2,9 @@ package com.github.jts.tasks;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * Utility class to ensure to generate a new unique ID for each task.
+ */
 public class TaskIDGenerator {
     private final AtomicLong COUNTER = new AtomicLong(0);
 

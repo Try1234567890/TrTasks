@@ -16,7 +16,7 @@ public class ConditionalScheduler extends GenericTaskScheduler {
 
     @Override
     protected void push(Timer timer) {
-        timer.register((_) -> getTask().condition().getAsBoolean(), getTask());
+        timer.register((_) -> getTask().getCondition().getAsBoolean(), getTask());
     }
 }
 

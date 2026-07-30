@@ -11,6 +11,10 @@ import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * The default implementation of a {@link Timer}
+ * See {@link TimerConfig} for some customization.
+ */
 public class TimerImpl implements Timer {
     private static final Object RUNNING_LOCK = new Object();
     public static final Logger LOGGER = Logger.getLogger(TimerImpl.class.getName());
@@ -33,7 +37,7 @@ public class TimerImpl implements Timer {
             start();
     }
 
-    public TimerConfig config() {
+    public TimerConfig getConfig() {
         return config;
     }
 
@@ -94,7 +98,7 @@ public class TimerImpl implements Timer {
     }
 
     private long getIntervalNanos() {
-        return config.CYCLE_INTERVAL.get().toNano();
+        return config.CYCLE_INTERVAL.get().toNanos();
     }
 
     public void start() {
@@ -107,9 +111,16 @@ public class TimerImpl implements Timer {
             return;
         }
 
+        startCycles();
+    }
 
+    private void startCycles() {
         scheduledCycle = executor.scheduleWithFixedDelay(this::runCycle, 0, getIntervalNanos(), TimeUnit.NANOSECONDS);
-        changeState(TimerState.RUNNING);
+        changeState(TimerState.STARTED);
+    }
+
+    private void stopCycles() {
+        if (scheduledCycle == null) scheduledCycle.cancel(false);
     }
 
     private void runCycle() {
@@ -121,7 +132,6 @@ public class TimerImpl implements Timer {
                 Task task = timerTask.task();
                 try {
                     if (timerTask.test(task)) {
-                        LOGGER.info("Running " + task);
                         task.run();
                     }
                 } catch (Exception e) { // We do not catch errors, only exceptions.
@@ -141,8 +151,8 @@ public class TimerImpl implements Timer {
 
         changeState(TimerState.STOPPING);
 
-        if (scheduledCycle != null)
-            scheduledCycle.cancel(false);
+        stopCycles();
+
         try {
             if (executor.awaitTermination(30, TimeUnit.SECONDS)) {
                 executor.shutdown();
@@ -163,8 +173,7 @@ public class TimerImpl implements Timer {
             return;
         }
 
-        if (scheduledCycle != null)
-            scheduledCycle.cancel(true);
+        stopCycles();
         executor.shutdown();
 
         changeState(TimerState.STOPPED);
@@ -175,10 +184,8 @@ public class TimerImpl implements Timer {
             LOGGER.warning("Cannot pause the timer if it's stopped or not started yet.");
             return;
         }
+        stopCycles();
         changeState(TimerState.PAUSED);
-
-        if (scheduledCycle != null)
-            scheduledCycle.cancel(false);
     }
 
     public void resume() {
@@ -187,8 +194,7 @@ public class TimerImpl implements Timer {
             return;
         }
 
-        changeState(TimerState.STARTED);
-        scheduledCycle = executor.scheduleWithFixedDelay(this::runCycle, 0, getIntervalNanos(), TimeUnit.NANOSECONDS);
+        startCycles();
     }
 
     private void changeState(TimerState newState) {

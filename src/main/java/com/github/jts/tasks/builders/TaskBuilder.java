@@ -21,8 +21,8 @@ public abstract class TaskBuilder {
     protected List<TaskListener> listeners = new ArrayList<>();
     protected Executor executor;
 
-    public static TimeTaskBuilder time() {
-        return new TimeTaskBuilder();
+    public static IntervalTaskBuilder time() {
+        return new IntervalTaskBuilder();
     }
 
     public static ConditionalTaskBuilder conditional() {

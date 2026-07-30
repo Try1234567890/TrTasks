@@ -50,9 +50,19 @@ public interface Task {
      */
     Time getInitialDelay();
 
+    /**
+     * Schedule this task to its timer.
+     *
+     * @return {@code true} if, and only if, the task was scheduled, {@code false} otherwise
+     */
     boolean schedule();
 
-    void unschedule();
+    /**
+     * Unschedule this task from its timer.
+     *
+     * @return {@code true} if, and only if, the task was unscheduled, {@code false} otherwise
+     */
+    boolean unschedule();
 
     /**
      * Retrieves the {@link TaskState} of this task.
@@ -67,13 +77,6 @@ public interface Task {
      * @param listener the listener to add
      */
     void newListener(TaskListener listener);
-
-    /**
-     * Remove a listener to this task.
-     *
-     * @param listener the listener to add
-     */
-    void remListener(TaskListener listener);
 
     /**
      * Execute the business logic of this task.

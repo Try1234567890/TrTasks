@@ -1,6 +1,7 @@
 package com.github.jts;
 
-import com.github.jts.tasks.utils.TaskBuilder;
+import com.github.jts.executor.SyncExecutor;
+import com.github.jts.tasks.builders.TaskBuilder;
 import com.github.jts.time.Time;
 import com.github.jts.time.TimeUnit;
 import org.junit.jupiter.api.Test;
@@ -11,22 +12,32 @@ class TestTimeTasksTest {
     void time_task_synchronous() {
         long nanos = System.nanoTime();
 
-        boolean scheduled = TaskBuilder.time()
+        TaskBuilder.time()
+                .withInitialDelay(Time.seconds(5))
                 .withInterval(Time.seconds(1))
-                .withDelay(Time.seconds(5))
-                .withAction(() -> System.out.println("Task executed after " + (Time.nanoseconds(System.nanoTime()).minus(nanos).asString(TimeUnit.SECONDS)) + " in " + Thread.currentThread().getName()))
+                .withAction(() -> System.out.println(
+                        "Task async-testing-task executed after " + (Time.nanoseconds(System.nanoTime())
+                                .minus(nanos)
+                                .asString(TimeUnit.SECONDS)) + " in " + Thread.currentThread().getName()
+                ))
                 .asynchronous()
+                .withID("async-testing-task")
                 .build()
                 .schedule();
 
-        System.out.println("Task scheduled: " + scheduled);
-        while (true) {
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
+        TaskBuilder.time()
+                .withInitialDelay(Time.seconds(5))
+                .withInterval(Time.seconds(1))
+                .withAction(() -> System.out.println(
+                        "Task sync-testing-task executed after " + (Time.nanoseconds(System.nanoTime())
+                                .minus(nanos)
+                                .asString(TimeUnit.SECONDS)) + " in " + Thread.currentThread().getName()
+                ))
+                .synchronous()
+                .withID("sync-testing-task")
+                .build()
+                .schedule();
 
+        SyncExecutor.runLoop();
+    }
 }
