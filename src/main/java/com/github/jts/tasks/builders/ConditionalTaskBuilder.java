@@ -1,26 +1,19 @@
-package com.github.jts.tasks.builders.conditional;
+package com.github.jts.tasks.builders;
 
 import com.github.jts.tasks.TaskAction;
 import com.github.jts.tasks.TaskConfig;
 import com.github.jts.tasks.TaskListener;
-import com.github.jts.tasks.builders.TaskBuilder;
-import com.github.jts.tasks.imlps.conditional.ConditionalTask;
+import com.github.jts.tasks.imlps.ConditionalTask;
 import com.github.jts.time.Time;
 import com.github.jts.timer.Timer;
+import com.github.utilities.validators.Preconditions;
 
 import java.util.List;
 import java.util.function.BooleanSupplier;
 
-public abstract class ConditionalTaskBuilder extends TaskBuilder {
+public class ConditionalTaskBuilder extends TaskBuilder {
     protected BooleanSupplier condition;
 
-    public static SyncConditionalTaskBuilder sync() {
-        return new SyncConditionalTaskBuilder();
-    }
-
-    public static AsyncConditionalTaskBuilder async() {
-        return new AsyncConditionalTaskBuilder();
-    }
     @Override
     public ConditionalTaskBuilder withID(String identifier) {
         super.withID(identifier);
@@ -51,26 +44,14 @@ public abstract class ConditionalTaskBuilder extends TaskBuilder {
         return this;
     }
 
-    public SyncConditionalTaskBuilder synchronous() {
-        return new SyncConditionalTaskBuilder()
-                .withID(identifier)
-                .withAction(action)
-                .withListeners(listeners)
-                .withTimer(timer)
-                .withInitialDelay(initialDelay)
-                .withConfig(config)
-                .withCondition(condition);
+    public ConditionalTaskBuilder synchronous() {
+        super.synchronous();
+        return this;
     }
 
-    public AsyncConditionalTaskBuilder asynchronous() {
-        return new AsyncConditionalTaskBuilder()
-                .withID(identifier)
-                .withAction(action)
-                .withListeners(listeners)
-                .withTimer(timer)
-                .withInitialDelay(initialDelay)
-                .withConfig(config)
-                .withCondition(condition);
+    public ConditionalTaskBuilder asynchronous() {
+        super.asynchronous();
+        return this;
     }
 
     @Override
@@ -91,5 +72,16 @@ public abstract class ConditionalTaskBuilder extends TaskBuilder {
     }
 
     @Override
-    public abstract ConditionalTask build();
+    public ConditionalTask build() {
+        return new ConditionalTask(
+                getID(),
+                getExecutor(),
+                getTimer(),
+                getInitialDelay(),
+                getConfig(),
+                getListeners(),
+                Preconditions.simpleNotNull(condition, "the condition cannot be null"),
+                getAction()
+        );
+    }
 }

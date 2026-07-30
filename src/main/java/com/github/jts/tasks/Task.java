@@ -3,7 +3,7 @@ package com.github.jts.tasks;
 import com.github.jts.executor.Executor;
 import com.github.jts.scheuduler.Scheduler;
 import com.github.jts.time.Time;
-import com.github.jts.timer.Timer;
+import com.github.jts.timer.TimerImpl;
 
 public interface Task {
 
@@ -29,7 +29,19 @@ public interface Task {
      */
     Scheduler getScheduler();
 
+    /**
+     * Retrieves the action that this task executes
+     *
+     * @return the action of this task;
+     */
     TaskAction getAction();
+
+    /**
+     * Retrieves the configuration of this task.
+     *
+     * @return the configuration of this task.
+     */
+    TaskConfig getConfig();
 
     /**
      * Retrieves the initial delay before the first execution of this task.
@@ -75,7 +87,7 @@ public interface Task {
     /**
      * Unschedule of this task <b>permanently</b>.
      * <p>
-     * The task will be removed from the {@link Timer} and this action cannot be undone.
+     * The task will be removed from the {@link TimerImpl} and this action cannot be undone.
      * If the task is currently running, it will continue to run until completion.
      */
     void cancel();
@@ -83,7 +95,7 @@ public interface Task {
     /**
      * Unschedule of this task <b>temporarily</b>.
      * <p>
-     * The task will be removed from the {@link Timer} and this action can be undone.
+     * The task will be removed from the {@link TimerImpl} and this action can be undone.
      * If the task is currently running, it will continue to run until completion.
      *
      * @see #resume()
@@ -91,7 +103,7 @@ public interface Task {
     void pause();
 
     /**
-     * Reschedule this task. The task will be added back to the {@link Timer}.
+     * Reschedule this task. The task will be added back to the {@link TimerImpl}.
      *
      * @see #pause()
      */

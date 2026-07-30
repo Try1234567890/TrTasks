@@ -1,11 +1,13 @@
 package com.github.jts.tasks.builders;
 
+import com.github.jts.executor.Executor;
+import com.github.jts.executor.SyncExecutor;
+import com.github.jts.executor.async.AsyncExecutor;
 import com.github.jts.tasks.*;
-import com.github.jts.tasks.builders.conditional.AsyncConditionalTaskBuilder;
-import com.github.jts.tasks.builders.time.TimeTaskBuilder;
 import com.github.jts.time.Time;
 import com.github.jts.timer.StaticTimer;
 import com.github.jts.timer.Timer;
+import com.github.utilities.validators.Preconditions;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,17 +19,14 @@ public abstract class TaskBuilder {
     protected Time initialDelay;
     protected TaskConfig config;
     protected List<TaskListener> listeners = new ArrayList<>();
-
-    public TaskBuilder() {
-        this.identifier = newID();
-    }
+    protected Executor executor;
 
     public static TimeTaskBuilder time() {
         return new TimeTaskBuilder();
     }
 
-    public static AsyncConditionalTaskBuilder conditional() {
-        return new AsyncConditionalTaskBuilder();
+    public static ConditionalTaskBuilder conditional() {
+        return new ConditionalTaskBuilder();
     }
 
     private String newID() {
@@ -55,9 +54,15 @@ public abstract class TaskBuilder {
         return this;
     }
 
-    public abstract TaskBuilder synchronous();
+    public TaskBuilder synchronous() {
+        this.executor = new SyncExecutor();
+        return this;
+    }
 
-    public abstract TaskBuilder asynchronous();
+    public TaskBuilder asynchronous() {
+        this.executor = new AsyncExecutor();
+        return this;
+    }
 
     public TaskBuilder withTimer(Timer timer) {
         this.timer = timer;
@@ -90,5 +95,17 @@ public abstract class TaskBuilder {
 
     protected TaskConfig getConfig() {
         return config != null ? config : new TaskConfig();
+    }
+
+    protected Executor getExecutor() {
+        return executor != null ? executor : new SyncExecutor();
+    }
+
+    protected List<TaskListener> getListeners() {
+        return listeners == null ? new ArrayList<>() : listeners;
+    }
+
+    protected TaskAction getAction() {
+        return Preconditions.simpleNotNull(action, "the action cannot be null");
     }
 }

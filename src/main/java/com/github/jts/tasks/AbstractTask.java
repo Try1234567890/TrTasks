@@ -1,12 +1,10 @@
 package com.github.jts.tasks;
 
 import com.github.jts.executor.Executor;
-import com.github.jts.scheuduler.Scheduler;
-import com.github.jts.tasks.imlps.RepeatingTask;
-import com.github.jts.tasks.imlps.time.AsyncTimeTask;
-import com.github.jts.tasks.imlps.time.SyncTimeTask;
+import com.github.jts.tasks.imlps.LimitedTask;
 import com.github.jts.time.Time;
 import com.github.jts.timer.Timer;
+import com.github.jts.timer.TimerImpl;
 import com.github.utilities.validators.Preconditions;
 
 import java.util.List;
@@ -19,12 +17,23 @@ public abstract class AbstractTask implements Task {
     private final Executor executor;
     private final Timer timer;
     private final Time initialDelay;
-    private final List<TaskListener> listeners = new CopyOnWriteArrayList<>();
+    private final List<TaskListener> listeners;
     private final TaskConfig config;
     private TaskAction action;
 
     private volatile TaskState state = TaskState.PENDING;
 
+    public AbstractTask(String id, Executor executor, Timer timer,
+                        Time initialDelay, TaskConfig config, List<TaskListener> listeners,
+                        TaskAction action) {
+        this.id = Preconditions.parameterNotNull(id, "id");
+        this.executor = Preconditions.simpleParameterNotNull(executor, "executor");
+        this.timer = Preconditions.simpleParameterNotNull(timer, "timer");
+        this.initialDelay = Time.ensure(initialDelay);
+        this.config = Preconditions.simpleNotNull(config, new TaskConfig());
+        this.listeners = Preconditions.simpleNotNull(listeners, new CopyOnWriteArrayList<>());
+        this.action = Preconditions.simpleParameterNotNull(action, "action");
+    }
     public AbstractTask(String id, Executor executor, Timer timer,
                         Time initialDelay, TaskConfig config, TaskAction action) {
         this.id = Preconditions.parameterNotNull(id, "id");
@@ -32,6 +41,7 @@ public abstract class AbstractTask implements Task {
         this.timer = Preconditions.simpleParameterNotNull(timer, "timer");
         this.initialDelay = Time.ensure(initialDelay);
         this.config = Preconditions.simpleNotNull(config, new TaskConfig());
+        this.listeners = new CopyOnWriteArrayList<>();
         this.action = Preconditions.simpleParameterNotNull(action, "action");
     }
 
@@ -41,10 +51,11 @@ public abstract class AbstractTask implements Task {
         this.action = Preconditions.parameterNotNull(action, "action");
     }
 
-    public TaskConfig config() {
-        return config;
-    }
-
+    /**
+     * Retrieves the timer where this task is registered.
+     *
+     * @return the timer where this task is registered.
+     */
     public Timer getTimer() {
         return timer;
     }
@@ -80,18 +91,34 @@ public abstract class AbstractTask implements Task {
         return state;
     }
 
+    /**
+     * Retrieves the action that this task executes
+     *
+     * @return the action of this task;
+     */
     @Override
     public TaskAction getAction() {
         return action;
     }
 
-
-    public Time getInitialDelay() {
-        return initialDelay;
-    }
-
+    /**
+     * Retrieves the configuration of this task.
+     *
+     * @return the configuration of this task.
+     */
+    @Override
     public TaskConfig getConfig() {
         return config;
+    }
+
+    /**
+     * Retrieves the initial delay before the first execution of this task.
+     *
+     * @return The initial delay.
+     */
+    @Override
+    public Time getInitialDelay() {
+        return initialDelay;
     }
 
     /**
@@ -115,13 +142,13 @@ public abstract class AbstractTask implements Task {
     }
 
     /**
-     * Create a new {@link RepeatingTask} of this task with the given {@code amount} of repetitions.
+     * Create a new {@link LimitedTask} of this task with the given {@code amount} of repetitions.
      *
      * @param amount The amount of repetitions.
-     * @return A new {@link RepeatingTask} of this task with the given {@code amount} of repetitions.
+     * @return A new {@link LimitedTask} of this task with the given {@code amount} of repetitions.
      */
-    public RepeatingTask repeat(int amount) {
-        return new RepeatingTask(this, amount);
+    public LimitedTask max(int amount) {
+        return new LimitedTask(this, amount);
     }
 
     /**
@@ -151,7 +178,7 @@ public abstract class AbstractTask implements Task {
     /**
      * Unschedule of this task <b>permanently</b>.
      * <p>
-     * The task will be removed from the {@link Timer} and this action cannot be undone.
+     * The task will be removed from the {@link TimerImpl} and this action cannot be undone.
      * If the task is currently running, it will continue to run until completion.
      */
     @Override
@@ -164,7 +191,7 @@ public abstract class AbstractTask implements Task {
     /**
      * Unschedule of this task <b>temporarily</b>.
      * <p>
-     * The task will be removed from the {@link Timer} and this action can be undone.
+     * The task will be removed from the {@link TimerImpl} and this action can be undone.
      * If the task is currently running, it will continue to run until completion.
      *
      * @see #resume()
@@ -176,7 +203,7 @@ public abstract class AbstractTask implements Task {
     }
 
     /**
-     * Reschedule this task. The task will be added back to the {@link Timer}.
+     * Reschedule this task. The task will be added back to the {@link TimerImpl}.
      *
      * @see #pause()
      */

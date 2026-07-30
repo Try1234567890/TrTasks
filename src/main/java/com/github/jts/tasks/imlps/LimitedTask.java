@@ -1,13 +1,7 @@
 package com.github.jts.tasks.imlps;
 
-import com.github.jts.executor.Executor;
 import com.github.jts.scheuduler.Scheduler;
 import com.github.jts.tasks.AbstractTask;
-import com.github.jts.tasks.TaskAction;
-import com.github.jts.tasks.TaskConfig;
-import com.github.jts.tasks.imlps.conditional.ConditionalTask;
-import com.github.jts.time.Time;
-import com.github.jts.timer.Timer;
 
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -19,11 +13,11 @@ import java.util.concurrent.atomic.AtomicLong;
  * The limit is decremented each time the task effectively executes, if the task
  * not runs for any reason (e.g. {@link ConditionalTask} predicate returns {@code false}) the limit is not decremented.
  */
-public class RepeatingTask extends AbstractTask {
+public class LimitedTask extends AbstractTask {
     private final AbstractTask task;
     private final AtomicLong repeatingRemaining;
 
-    public RepeatingTask(AbstractTask task, int repeat) {
+    public LimitedTask(AbstractTask task, int repeat) {
         super(task.getID(), task.getExecutor(), task.getTimer(), task.getInitialDelay(), task.getConfig(), task.getAction());
         this.task = task;
         this.repeatingRemaining = new AtomicLong(repeat);
