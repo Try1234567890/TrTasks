@@ -5,6 +5,10 @@ import com.github.utilities.options.BooleanOption;
 public class TaskConfig {
     public final BooleanOption RESCHEDULE_ON_FAIL = new BooleanOption(true);
 
+    public static TaskConfig newConfiguration() {
+        return new TaskConfig();
+    }
+
     public TaskConfig setRescheduleOnFail(boolean state) {
         RESCHEDULE_ON_FAIL.set(state);
         return this;
