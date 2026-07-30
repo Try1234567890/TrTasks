@@ -1,7 +1,6 @@
 package com.github.jts.scheuduler;
 
-import com.github.jts.tasks.Task;
-import com.github.jts.tasks.imlps.time.TimeTask;
+import com.github.jts.tasks.imlps.TimeTask;
 import com.github.jts.timer.Timer;
 
 import java.util.function.Predicate;
@@ -24,7 +23,7 @@ public class TimeScheduler extends GenericTaskScheduler {
 
     @Override
     protected void push(Timer timer) {
-        timer.newTask(CAN_RUN_TIME_PREDICATE, getTask());
+        timer.register(CAN_RUN_TIME_PREDICATE, getTask());
     }
 }
 

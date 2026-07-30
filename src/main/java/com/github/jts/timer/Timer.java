@@ -1,153 +1,138 @@
 package com.github.jts.timer;
 
 import com.github.jts.tasks.Task;
-import com.github.utilities.validators.Preconditions;
 
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Optional;
 import java.util.function.Predicate;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-public sealed class Timer permits StaticTimer {
+/**
+ * The timer is the process that runs it its own thread and cycle through all registered
+ * tasks checking if they can run and executing them if they can.
+ *
+ * <h2>Timer Error Handling</h2>
+ * TODO
+ */
+public interface Timer {
 
-    public static final Logger LOGGER = Logger.getLogger(Timer.class.getName());
+    /**
+     * Remove the {@code task} from the running tasks and mark it as <b>task in pause</b>
+     *
+     * @param task the task to work on
+     */
+    void pause(Task task);
 
-    private final TimerConfig config;
-    private final List<TimerTask> tasks = new CopyOnWriteArrayList<>();
+    /**
+     * Re-add the {@code task} to the running tasks and unmark it from <b>task in pause</b>
+     *
+     * @param task the task to work on
+     * @return the optional container of the removed task if any has removed, otherwise {@link Optional#empty()}
+     */
+    Optional<? extends Task> unpause(Task task);
 
-    private final ScheduledExecutorService executor =
-            Executors.newSingleThreadScheduledExecutor(r ->
-                    Thread.ofPlatform().name("timer-execution-thread")
-                            .uncaughtExceptionHandler((thread, exception) -> LOGGER.log(Level.SEVERE, "Uncaught exception in timer execution thread", exception))
-                            .unstarted(r));
+    /**
+     * Register the {@code task} with the predicate {@code canRun} to check if it can run at each iteration.
+     *
+     * @param canRun the predicate to check if it can run; This is called at each iteration.
+     * @param task   the task to execute.
+     */
+    void register(Predicate<? extends Task> canRun, Task task);
 
-    private final AtomicBoolean started = new AtomicBoolean(false);
-    private final AtomicBoolean stopped = new AtomicBoolean(false);
-    private final AtomicBoolean paused = new AtomicBoolean(false);
+    /**
+     * Unregister the {@code task} from the timer.
+     *
+     * @param task the task to remove.
+     * @return the optional container of the removed task if any has removed, otherwise {@link Optional#empty()}
+     */
+    Optional<? extends Task> unregister(Task task);
 
-    private volatile ScheduledFuture<?> scheduledCycle;
+    /**
+     * Get the current state of the timer.
+     *
+     * @return the current state of the timer.
+     */
+    TimerState getState();
 
-    public Timer(TimerConfig config) {
-        this.config = Preconditions.simpleNotNull(config, new TimerConfig());
-        if (this.config.START_ON_CREATE.get())
-            start();
+    /**
+     * Checks if this timer is currently in the process of stopping or already stopped.
+     * <p>
+     * This is equivalent to {@code getState() == TimerState.STOPPED || getState() == TimerState.STOPPING}.
+     *
+     * @return {@code true} if the timer is in the process of stopping or already stopped, otherwise {@code false}.
+     */
+    default boolean isStopping() {
+        return getState() == TimerState.STOPPED || getState() == TimerState.STOPPING;
     }
 
-    public TimerConfig config() {
-        return config;
+    /**
+     * Checks if this timer is currently stopped.
+     * <p>
+     * This is equivalent to {@code getState() == TimerState.STOPPED}.
+     *
+     * @return {@code true} if the timer is stopped, otherwise {@code false}.
+     */
+    default boolean isStopped() {
+        return getState() == TimerState.STOPPED;
     }
 
-    public boolean isFull() {
-        int maxSize = config.MAX_TASKS.get();
-        return maxSize >= 0 && tasks.size() >= maxSize;
+    /**
+     * Checks if this timer is currently stopped.
+     * <p>
+     * This is equivalent to {@code getState() == TimerState.PAUSED}.
+     *
+     * @return {@code true} if the timer is paused, otherwise {@code false}.
+     */
+    default boolean isPaused() {
+        return getState() == TimerState.PAUSED;
     }
 
-    public void newTask(Predicate<? extends Task> canRun, Task task) {
-        if (isFull())
-            throw new IndexOutOfBoundsException("The maximum number of tasks has been reached!");
-
-        tasks.add(new TimerTask(Preconditions.parameterNotNull(canRun, "canRun"),
-                Preconditions.parameterNotNull(task, "task")));
-
-        if (config.START_ON_CREATE.get() && !isRunning() && !isStopped())
-            start();
+    /**
+     * Checks if this timer is currently started.
+     * <p>
+     * This is equivalent to {@code getState() == TimerState.STARTED || getState() == TimerState.RUNNING}.
+     *
+     * @return {@code true} if the timer is started, otherwise {@code false}.
+     */
+    default boolean isStarted() {
+        return getState() == TimerState.STARTED || getState() == TimerState.RUNNING;
     }
 
-    public boolean remTask(Task task) {
-        for (TimerTask timerTask : tasks) {
-            if (timerTask.task().equals(task)) {
-                tasks.remove(timerTask);
-                return true;
-            }
-        }
-        return false;
+    /**
+     * Checks if this timer is currently running.
+     * <p>
+     * This is equivalent to {@code getState() == TimerState.RUNNING}.
+     *
+     * @return {@code true} if the timer is running, otherwise {@code false}.
+     */
+    default boolean isRunningNow() {
+        return getState() == TimerState.RUNNING;
     }
 
-    private boolean isStopped() {
-        return stopped.get();
-    }
+    /**
+     * Starts the current timer if it is not already started.
+     */
+    void start();
 
-    private boolean isPaused() {
-        return paused.get();
-    }
+    /**
+     * Stops the current timer immediately. This method doesn't wait for the current tasks to finish.
+     */
+    void shutdownNow();
 
-    private boolean isRunning() {
-        return started.get() && !stopped.get() && !paused.get();
-    }
+    /**
+     * Stops the current timer. This method waits for the current tasks to finish.
+     */
+    void shutdown();
 
-    private long getIntervalNanos() {
-        return config.CYCLE_INTERVAL.get().toNano();
-    }
+    /**
+     * Pauses the current timer. This method doesn't wait for the current tasks to finish.
+     */
+    void pause();
 
-    public void start() {
-        if (isStopped())
-            throw new IllegalStateException("This timer has already been shut down and cannot be restarted.");
+    /**
+     * Resumes the current timer.
+     */
+    void resume();
 
-        if (!started.compareAndSet(false, true))
-            return;
-
-        scheduledCycle = executor.scheduleWithFixedDelay(this::runCycle, 0, getIntervalNanos(), TimeUnit.NANOSECONDS);
-    }
-
-    private void runCycle() {
-        if (isStopped() || isPaused()) return;
-
-        for (TimerTask timerTask : tasks) {
-            Task task = timerTask.task();
-            try {
-                if (timerTask.test(task)) {
-                    LOGGER.info("Running " + task);
-                    task.run();
-                }
-            } catch (Exception e) { // We do not catch errors, only exceptions.
-                LOGGER.log(Level.SEVERE, "An unexpected exception is thrown while evaluating " + task, e);
-            }
-        }
-    }
-
-    public void shutdownNow() {
-        stopped.set(true);
-        if (scheduledCycle != null)
-            scheduledCycle.cancel(true);
-        executor.shutdown();
-    }
-
-    public void shutdown() {
-        stopped.set(true);
-        if (scheduledCycle != null)
-            scheduledCycle.cancel(false);
-        executor.shutdown();
-    }
-
-    //public void pause() {
-    //    paused.set(true);
-    //    if (scheduledCycle != null)
-    //        scheduledCycle.cancel(false);
-    //}
-//
-    //public void resume() {
-    //    if (isStopped()) return;
-    //    paused.set(false);
-    //    scheduledCycle = executor.scheduleWithFixedDelay(this::runCycle, 0, getIntervalNanos(), TimeUnit.NANOSECONDS);
-    //}
 }
-
-
-
-
-
-
-
-
-
-
-
 
 
 
