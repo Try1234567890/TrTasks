@@ -1,6 +1,6 @@
 package com.github.jts.timer;
 
-public final class StaticTimer extends Timer {
+public final class StaticTimer extends TimerImpl {
     private StaticTimer() {
         super(new TimerConfig().setMaxTasks(5000));
     }
