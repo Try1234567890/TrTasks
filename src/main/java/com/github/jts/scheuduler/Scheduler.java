@@ -6,7 +6,7 @@ import com.github.jts.timer.Timer;
 
 public interface Scheduler {
 
-    Task task();
+    Task getTask();
 
     boolean schedule(Timer timer);
 
@@ -17,7 +17,7 @@ public interface Scheduler {
     }
 
     default boolean unschedule(Timer timer) {
-        return timer.remTask(task());
+        return timer.remTask(getTask());
     }
 
     default boolean unschedule() {
