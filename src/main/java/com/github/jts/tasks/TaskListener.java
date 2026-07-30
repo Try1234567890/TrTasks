@@ -11,12 +11,15 @@ public interface TaskListener {
     }
 
     default void onStart(Task task) {
+
     }
 
     default void onSuccess(Task task) {
+
     }
 
     default void onFinish(Task task) {
+
     }
 
     default void onResume(Task task) {
