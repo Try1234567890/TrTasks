@@ -125,18 +125,30 @@ public sealed class Timer permits StaticTimer {
         executor.shutdown();
     }
 
-    public void pause() {
-        paused.set(true);
-        if (scheduledCycle != null)
-            scheduledCycle.cancel(false);
-    }
-
-    public void resume() {
-        if (isStopped()) return;
-        paused.set(false);
-        scheduledCycle = executor.scheduleWithFixedDelay(this::runCycle, 0, getIntervalNanos(), TimeUnit.NANOSECONDS);
-    }
+    //public void pause() {
+    //    paused.set(true);
+    //    if (scheduledCycle != null)
+    //        scheduledCycle.cancel(false);
+    //}
+//
+    //public void resume() {
+    //    if (isStopped()) return;
+    //    paused.set(false);
+    //    scheduledCycle = executor.scheduleWithFixedDelay(this::runCycle, 0, getIntervalNanos(), TimeUnit.NANOSECONDS);
+    //}
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
