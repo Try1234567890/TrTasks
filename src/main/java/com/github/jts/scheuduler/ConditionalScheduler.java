@@ -1,9 +1,7 @@
 package com.github.jts.scheuduler;
 
-import com.github.jts.tasks.Task;
-import com.github.jts.tasks.imlps.conditional.ConditionalTask;
+import com.github.jts.tasks.imlps.ConditionalTask;
 import com.github.jts.timer.Timer;
-import com.github.utilities.validators.Preconditions;
 
 public class ConditionalScheduler extends GenericTaskScheduler {
 
@@ -17,8 +15,8 @@ public class ConditionalScheduler extends GenericTaskScheduler {
     }
 
     @Override
-    public void push(Timer timer) {
-        timer.newTask((_) -> getTask().condition().getAsBoolean(), getTask());
+    protected void push(Timer timer) {
+        timer.register((_) -> getTask().condition().getAsBoolean(), getTask());
     }
 }
 
