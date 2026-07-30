@@ -1,4 +1,4 @@
-package com.github.jts.tasks.utils;
+package com.github.jts.tasks;
 
 import java.util.concurrent.atomic.AtomicLong;
 
