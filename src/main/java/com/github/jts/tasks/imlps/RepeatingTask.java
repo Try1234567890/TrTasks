@@ -1,8 +1,12 @@
 package com.github.jts.tasks.imlps;
 
+import com.github.jts.executor.Executor;
 import com.github.jts.scheuduler.Scheduler;
 import com.github.jts.tasks.AbstractTask;
+import com.github.jts.tasks.TaskAction;
+import com.github.jts.tasks.TaskConfig;
 import com.github.jts.tasks.imlps.conditional.ConditionalTask;
+import com.github.jts.time.Time;
 import com.github.jts.timer.Timer;
 
 import java.util.concurrent.atomic.AtomicLong;
@@ -19,8 +23,8 @@ public class RepeatingTask extends AbstractTask {
     private final AbstractTask task;
     private final AtomicLong repeatingRemaining;
 
-    public RepeatingTask(AbstractTask task, Timer timer, int repeat) {
-        super(task.getID(), task.getExecutor(), timer, task.getAction());
+    public RepeatingTask(AbstractTask task, int repeat) {
+        super(task.getID(), task.getExecutor(), task.getTimer(), task.getInitialDelay(), task.getConfig(), task.getAction());
         this.task = task;
         this.repeatingRemaining = new AtomicLong(repeat);
 
@@ -34,10 +38,9 @@ public class RepeatingTask extends AbstractTask {
         });
     }
 
-    public RepeatingTask(AbstractTask task, int repeat) {
-        this(task, task.getTimer(), repeat);
+    public long getRepeatingRemaining() {
+        return repeatingRemaining.get();
     }
-
 
     @Override
     public Scheduler getScheduler() {
