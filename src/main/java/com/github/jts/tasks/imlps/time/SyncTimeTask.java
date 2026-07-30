@@ -1,17 +1,15 @@
 package com.github.jts.tasks.imlps.time;
 
 import com.github.jts.executor.SyncExecutor;
-import com.github.jts.executor.async.AsyncExecutor;
 import com.github.jts.scheuduler.Scheduler;
 import com.github.jts.scheuduler.TimeScheduler;
 import com.github.jts.tasks.AbstractTask;
-import com.github.jts.tasks.Task;
 import com.github.jts.tasks.TaskAction;
-import com.github.jts.time.InvalidTimeException;
+import com.github.jts.tasks.TaskConfig;
+import com.github.jts.tasks.builders.time.SyncTimeTaskBuilder;
+import com.github.jts.tasks.builders.time.TimeTaskBuilder;
 import com.github.jts.time.Time;
-import com.github.jts.timer.StaticTimer;
 import com.github.jts.timer.Timer;
-import com.github.utilities.validators.Preconditions;
 
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -32,8 +30,42 @@ public class SyncTimeTask extends AbstractTask implements TimeTask {
         });
     }
 
-    public SyncTimeTask(String id, TaskAction action, Time interval, Time delay) {
-        this(id, action, StaticTimer.get(), interval, delay);
+    public static SyncTimeTask create(String id, Time initDelay, Time interval, TaskConfig config, TaskAction action) {
+        return builder()
+                .withID(id)
+                .withInitialDelay(initDelay)
+                .withConfig(config)
+                .withAction(action)
+                .withInterval(interval)
+                .build();
+    }
+
+    public static SyncTimeTask create(String id, Time interval, TaskConfig config, TaskAction action) {
+        return builder()
+                .withID(id)
+                .withInterval(interval)
+                .withConfig(config)
+                .withAction(action)
+                .build();
+    }
+
+    public static SyncTimeTask create(String id, Time interval, TaskAction action) {
+        return builder()
+                .withID(id)
+                .withInterval(interval)
+                .withAction(action)
+                .build();
+    }
+
+    public static SyncTimeTask create(Time interval, TaskAction action) {
+        return builder()
+                .withInterval(interval)
+                .withAction(action)
+                .build();
+    }
+
+    public static SyncTimeTaskBuilder builder() {
+        return TimeTaskBuilder.sync();
     }
 
     /**

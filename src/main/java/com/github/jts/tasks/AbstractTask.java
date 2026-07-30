@@ -3,6 +3,9 @@ package com.github.jts.tasks;
 import com.github.jts.executor.Executor;
 import com.github.jts.scheuduler.Scheduler;
 import com.github.jts.tasks.imlps.RepeatingTask;
+import com.github.jts.tasks.imlps.time.AsyncTimeTask;
+import com.github.jts.tasks.imlps.time.SyncTimeTask;
+import com.github.jts.time.Time;
 import com.github.jts.timer.Timer;
 import com.github.utilities.validators.Preconditions;
 
@@ -15,29 +18,27 @@ public abstract class AbstractTask implements Task {
     private final String id;
     private final Executor executor;
     private final Timer timer;
+    private final Time initialDelay;
     private final List<TaskListener> listeners = new CopyOnWriteArrayList<>();
     private final TaskConfig config;
     private TaskAction action;
 
     private volatile TaskState state = TaskState.PENDING;
 
-    protected AbstractTask(String id, Executor executor, Timer timer, TaskConfig config, TaskAction action) {
+    public AbstractTask(String id, Executor executor, Timer timer,
+                        Time initialDelay, TaskConfig config, TaskAction action) {
         this.id = Preconditions.parameterNotNull(id, "id");
         this.executor = Preconditions.simpleParameterNotNull(executor, "executor");
         this.timer = Preconditions.simpleParameterNotNull(timer, "timer");
+        this.initialDelay = Time.ensure(initialDelay);
         this.config = Preconditions.simpleNotNull(config, new TaskConfig());
         this.action = Preconditions.simpleParameterNotNull(action, "action");
     }
 
-    protected AbstractTask(String id, Executor executor, Timer timer, TaskAction action) {
-        this(id, executor, timer, new TaskConfig(), action);
-    }
-
     protected void setAction(TaskAction action) {
-        Preconditions.parameterNotNull(action, "action");
-        if (state != TaskState.PENDING)
-            throw new IllegalStateException("Cannot set action for task in state: " + state);
-        this.action = action;
+        if (state != TaskState.PENDING && state != TaskState.PAUSED)
+            throw new IllegalStateException("Cannot set action for task in state: " + state + ". Only PENDING and PAUSED states are allowed.");
+        this.action = Preconditions.parameterNotNull(action, "action");
     }
 
     public TaskConfig config() {
@@ -85,6 +86,14 @@ public abstract class AbstractTask implements Task {
     }
 
 
+    public Time getInitialDelay() {
+        return initialDelay;
+    }
+
+    public TaskConfig getConfig() {
+        return config;
+    }
+
     /**
      * Adds a listener to this task.
      *
@@ -112,7 +121,7 @@ public abstract class AbstractTask implements Task {
      * @return A new {@link RepeatingTask} of this task with the given {@code amount} of repetitions.
      */
     public RepeatingTask repeat(int amount) {
-        return new RepeatingTask(this, timer, amount);
+        return new RepeatingTask(this, amount);
     }
 
     /**

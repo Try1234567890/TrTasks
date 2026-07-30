@@ -1,8 +1,9 @@
-package com.github.jts.tasks.utils;
+package com.github.jts.tasks.builders;
 
-import com.github.jts.tasks.Task;
-import com.github.jts.tasks.TaskAction;
-import com.github.jts.tasks.TaskListener;
+import com.github.jts.tasks.*;
+import com.github.jts.tasks.builders.conditional.AsyncConditionalTaskBuilder;
+import com.github.jts.tasks.builders.time.TimeTaskBuilder;
+import com.github.jts.time.Time;
 import com.github.jts.timer.StaticTimer;
 import com.github.jts.timer.Timer;
 
@@ -13,8 +14,9 @@ public abstract class TaskBuilder {
     protected String identifier;
     protected TaskAction action;
     protected Timer timer;
+    protected Time initialDelay;
+    protected TaskConfig config;
     protected List<TaskListener> listeners = new ArrayList<>();
-    protected boolean synchronous;
 
     public TaskBuilder() {
         this.identifier = newID();
@@ -24,8 +26,8 @@ public abstract class TaskBuilder {
         return new TimeTaskBuilder();
     }
 
-    public static ConditionalTaskBuilder conditional() {
-        return new ConditionalTaskBuilder();
+    public static AsyncConditionalTaskBuilder conditional() {
+        return new AsyncConditionalTaskBuilder();
     }
 
     private String newID() {
@@ -53,18 +55,22 @@ public abstract class TaskBuilder {
         return this;
     }
 
-    public TaskBuilder synchronous() {
-        this.synchronous = true;
-        return this;
-    }
+    public abstract TaskBuilder synchronous();
 
-    public TaskBuilder asynchronous() {
-        this.synchronous = false;
-        return this;
-    }
+    public abstract TaskBuilder asynchronous();
 
     public TaskBuilder withTimer(Timer timer) {
         this.timer = timer;
+        return this;
+    }
+
+    public TaskBuilder withInitialDelay(Time initialDelay) {
+        this.initialDelay = initialDelay;
+        return this;
+    }
+
+    public TaskBuilder withConfig(TaskConfig config) {
+        this.config = config;
         return this;
     }
 
@@ -78,5 +84,11 @@ public abstract class TaskBuilder {
         return (identifier == null || identifier.isEmpty()) ? newID() : identifier;
     }
 
+    protected Time getInitialDelay() {
+        return (initialDelay == null || initialDelay.isInvalid()) ? Time.EMPTY : initialDelay;
+    }
 
+    protected TaskConfig getConfig() {
+        return config != null ? config : new TaskConfig();
+    }
 }

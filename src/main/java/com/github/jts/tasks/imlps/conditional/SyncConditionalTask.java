@@ -5,8 +5,12 @@ import com.github.jts.scheuduler.ConditionalScheduler;
 import com.github.jts.scheuduler.Scheduler;
 import com.github.jts.tasks.AbstractTask;
 import com.github.jts.tasks.TaskAction;
-import com.github.jts.timer.StaticTimer;
+import com.github.jts.tasks.TaskConfig;
+import com.github.jts.tasks.builders.conditional.ConditionalTaskBuilder;
+import com.github.jts.tasks.builders.conditional.SyncConditionalTaskBuilder;
+import com.github.jts.time.Time;
 import com.github.jts.timer.Timer;
+import com.github.utilities.validators.Preconditions;
 
 import java.util.function.BooleanSupplier;
 
@@ -21,8 +25,42 @@ public class SyncConditionalTask extends AbstractTask implements ConditionalTask
         this.condition = Preconditions.simpleParameterNotNull(condition, "condition");
     }
 
-    public SyncConditionalTask(String id, BooleanSupplier condition, TaskAction action) {
-        this(id, StaticTimer.get(), condition, action);
+    public static SyncConditionalTask create(String id, Time initDelay, TaskConfig config, BooleanSupplier condition, TaskAction action) {
+        return builder()
+                .withID(id)
+                .withInitialDelay(initDelay)
+                .withConfig(config)
+                .withCondition(condition)
+                .withAction(action)
+                .build();
+    }
+
+    public static SyncConditionalTask create(String id, TaskConfig config, BooleanSupplier condition, TaskAction action) {
+        return builder()
+                .withID(id)
+                .withConfig(config)
+                .withCondition(condition)
+                .withAction(action)
+                .build();
+    }
+
+    public static SyncConditionalTask create(String id, BooleanSupplier condition, TaskAction action) {
+        return builder()
+                .withID(id)
+                .withCondition(condition)
+                .withAction(action)
+                .build();
+    }
+
+    public static SyncConditionalTask create(BooleanSupplier condition, TaskAction action) {
+        return builder()
+                .withCondition(condition)
+                .withAction(action)
+                .build();
+    }
+
+    private static SyncConditionalTaskBuilder builder() {
+        return ConditionalTaskBuilder.sync();
     }
 
     @Override
