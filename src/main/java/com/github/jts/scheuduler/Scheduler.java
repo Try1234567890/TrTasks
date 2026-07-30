@@ -10,6 +10,8 @@ public interface Scheduler {
 
     boolean schedule(Timer timer);
 
+    void shutdown();
+
     default boolean schedule() {
         return schedule(StaticTimer.get());
     }
@@ -21,5 +23,7 @@ public interface Scheduler {
     default boolean unschedule() {
         return unschedule(StaticTimer.get());
     }
+
+
 
 }

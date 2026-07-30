@@ -16,6 +16,11 @@ public record ConditionalScheduler(ConditionalTask task) implements Scheduler {
         return false;
     }
 
+    @Override
+    public void shutdown() {
+        // Nothing to-do
+    }
+
 }
 
 
