@@ -14,10 +14,11 @@ public class AsyncConditionalTask extends AbstractTask implements ConditionalTas
     private final Scheduler scheduler;
     private final BooleanSupplier condition;
 
-    public AsyncConditionalTask(String id, Timer timer, BooleanSupplier condition, TaskAction action) {
-        super(id, new AsyncExecutor(), timer, action);
-        this.condition = condition;
+    public AsyncConditionalTask(String id, Timer timer, Time initialDelay, TaskConfig config,
+                                BooleanSupplier condition, TaskAction action) {
+        super(id, new AsyncExecutor(), timer, initialDelay, config, action);
         this.scheduler = new ConditionalScheduler(this);
+        this.condition = Preconditions.simpleParameterNotNull(condition, "condition");
     }
 
     public AsyncConditionalTask(String id, BooleanSupplier condition, TaskAction action) {

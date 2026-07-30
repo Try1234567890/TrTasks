@@ -18,14 +18,13 @@ import java.util.concurrent.atomic.AtomicLong;
 public class SyncTimeTask extends AbstractTask implements TimeTask {
     private final Scheduler scheduler;
     private final Time interval;
-    private final Time delay;
     private final AtomicLong lastExecutionTime = new AtomicLong(0);
 
-    public SyncTimeTask(String id, TaskAction action, Timer timer, Time interval, Time delay) {
-        super(id, new SyncExecutor(), timer, action);
-        this.interval = Time.ensure(interval);
-        this.delay = Time.ensure(delay);
+    public SyncTimeTask(String id, Timer timer, Time initialDelay, Time interval,
+                        TaskConfig config, TaskAction action) {
+        super(id, new SyncExecutor(), timer, initialDelay, config, action);
 
+        this.interval = Time.ensure(interval);
         this.scheduler = new TimeScheduler(this);
         setAction(() -> {
             action.execute();
@@ -55,16 +54,6 @@ public class SyncTimeTask extends AbstractTask implements TimeTask {
     @Override
     public Time getInterval() {
         return interval;
-    }
-
-    /**
-     * Retrieves the initial delay before the first execution of this task.
-     *
-     * @return The initial delay.
-     */
-    @Override
-    public Time getDelay() {
-        return delay;
     }
 
     @Override

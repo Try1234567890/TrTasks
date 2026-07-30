@@ -22,12 +22,4 @@ public interface TimeTask extends Task {
      */
     Time getInterval();
 
-    /**
-     * Retrieves the initial delay before the first execution of this task.
-     *
-     * @return The initial delay.
-     */
-    Time getDelay();
-
-
 }

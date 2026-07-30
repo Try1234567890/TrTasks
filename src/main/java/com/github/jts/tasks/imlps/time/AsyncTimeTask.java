@@ -14,14 +14,14 @@ import java.util.concurrent.atomic.AtomicLong;
 public class AsyncTimeTask extends AbstractTask implements TimeTask {
     private final Scheduler scheduler;
     private final Time interval;
-    private final Time delay;
     private final AtomicLong lastExecutionTime = new AtomicLong(0);
 
-    public AsyncTimeTask(String id, TaskAction action, Timer timer, Time interval, Time delay) {
-        super(id, new AsyncExecutor(), timer, action);
+    public AsyncTimeTask(String id, Timer timer, Time initialDelay, Time interval,
+                         TaskConfig config, TaskAction action) {
+        super(id, new AsyncExecutor(), timer, initialDelay, config, action);
+
+        this.interval = Time.ensure(interval);
         this.scheduler = new TimeScheduler(this);
-        this.interval = interval;
-        this.delay = delay;
         setAction(() -> {
             action.execute();
             lastExecutionTime.set(System.currentTimeMillis());
@@ -52,15 +52,6 @@ public class AsyncTimeTask extends AbstractTask implements TimeTask {
         return interval;
     }
 
-    /**
-     * Retrieves the initial delay before the first execution of this task.
-     *
-     * @return The initial delay.
-     */
-    @Override
-    public Time getDelay() {
-        return delay;
-    }
 
     @Override
     public Scheduler getScheduler() {

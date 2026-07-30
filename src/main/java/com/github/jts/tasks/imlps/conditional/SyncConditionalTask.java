@@ -14,10 +14,11 @@ public class SyncConditionalTask extends AbstractTask implements ConditionalTask
     private final Scheduler scheduler;
     private final BooleanSupplier condition;
 
-    public SyncConditionalTask(String id, Timer timer, BooleanSupplier condition, TaskAction action) {
-        super(id, new SyncExecutor(), timer, action);
-        this.condition = condition;
+    public SyncConditionalTask(String id, Timer timer, Time initialDelay, TaskConfig config,
+                               BooleanSupplier condition, TaskAction action) {
+        super(id, new SyncExecutor(), timer, initialDelay, config, action);
         this.scheduler = new ConditionalScheduler(this);
+        this.condition = Preconditions.simpleParameterNotNull(condition, "condition");
     }
 
     public SyncConditionalTask(String id, BooleanSupplier condition, TaskAction action) {

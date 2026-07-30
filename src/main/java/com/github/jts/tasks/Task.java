@@ -2,6 +2,7 @@ package com.github.jts.tasks;
 
 import com.github.jts.executor.Executor;
 import com.github.jts.scheuduler.Scheduler;
+import com.github.jts.time.Time;
 import com.github.jts.timer.Timer;
 
 public interface Task {
@@ -29,6 +30,13 @@ public interface Task {
     Scheduler getScheduler();
 
     TaskAction getAction();
+
+    /**
+     * Retrieves the initial delay before the first execution of this task.
+     *
+     * @return The initial delay.
+     */
+    Time getInitialDelay();
 
     boolean schedule();
 
