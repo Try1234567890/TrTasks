@@ -6,8 +6,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Time {
-    public static final Time EMPTY = Time.microseconds(0);
-    public static final Time NULL = Time.microseconds(0);
+    public static final Time EMPTY = Time.nanoseconds(0);
+    public static final Time NULL = Time.nanoseconds(0);
     private static final Pattern TIME_PATTERN = Pattern.compile("(\\d+)\\s*([a-zA-Z]{1,12})");
 
     private final long amount;
