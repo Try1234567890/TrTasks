@@ -50,6 +50,7 @@ public class AsyncExecutor implements Executor {
                 executorService.shutdownNow();
             }
         } catch (InterruptedException e) {
+            LOGGER.severe("The async task executor thread was interrupted while waiting for termination. Shutting down now.");
             executorService.shutdownNow();
             Thread.currentThread().interrupt();
         }
