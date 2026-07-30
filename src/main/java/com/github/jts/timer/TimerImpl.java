@@ -175,7 +175,6 @@ public class TimerImpl implements Timer {
 
         stopCycles();
         executor.shutdown();
-
         changeState(TimerState.STOPPED);
     }
 

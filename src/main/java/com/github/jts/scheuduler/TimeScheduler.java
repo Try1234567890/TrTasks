@@ -3,14 +3,9 @@ package com.github.jts.scheuduler;
 import com.github.jts.tasks.imlps.TimeTask;
 import com.github.jts.timer.Timer;
 
-import java.util.function.Predicate;
-import java.util.logging.Logger;
+import java.time.LocalTime;
 
 public class TimeScheduler extends GenericTaskScheduler {
-    public static final Logger LOGGER = Logger.getLogger(TimeScheduler.class.getName());
-    private static final Predicate<TimeTask> CAN_RUN_TIME_PREDICATE =
-            t -> (System.currentTimeMillis() >= (t.getLastTimeExecuted() + t.getInterval().toMillis()));
-
 
     public TimeScheduler(TimeTask task) {
         super(task);
@@ -23,7 +18,13 @@ public class TimeScheduler extends GenericTaskScheduler {
 
     @Override
     protected void push(Timer timer) {
-        timer.register(CAN_RUN_TIME_PREDICATE, getTask());
+        timer.register(_ -> canExecute(), getTask());
+    }
+
+    private boolean canExecute() {
+        LocalTime time = getTask().getTime();
+        LocalTime now = LocalTime.now();
+        return time.isBefore(now) || time.equals(now);
     }
 }
 
