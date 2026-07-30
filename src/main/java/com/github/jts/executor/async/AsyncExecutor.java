@@ -18,11 +18,7 @@ public class AsyncExecutor implements Executor {
 
     public AsyncExecutor(AsyncExecutorConfig config) {
         this.config = Preconditions.simpleNotNull(config, new AsyncExecutorConfig());
-        this.executorService = Executors.newSingleThreadExecutor(r -> {
-            Thread t = new Thread(r, "async-task-executor");
-            t.setDaemon(true);
-            return t;
-        });
+        this.executorService = Executors.newSingleThreadExecutor(r -> Thread.ofVirtual().name("async-task-executor").unstarted(r));
     }
 
     public AsyncExecutor() {
