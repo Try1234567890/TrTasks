@@ -120,7 +120,7 @@ public class TimerImpl implements Timer {
     }
 
     private void stopCycles() {
-        if (scheduledCycle == null) scheduledCycle.cancel(false);
+        if (scheduledCycle != null) scheduledCycle.cancel(false);
     }
 
     private void runCycle() {
